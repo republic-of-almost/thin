@@ -1,0 +1,8 @@
+
+
+task :build do |t, args|
+
+  cmd = "clang++ -framework OpenGL -lsdl2 -L /usr/local/lib -I./include/ -I /usr/local/include test.cpp -std=c++14"
+  sh cmd
+
+end
