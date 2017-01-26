@@ -32,6 +32,17 @@ getError(const char *msg);
 
 // ------------------------------------------------------------------[ Misc ]--
 
+void
+enable(const GLenum cap);
+
+void
+enable(const size_t count, const GLenum to_enable[]);
+
+void
+disable(const GLenum cap);
+
+void
+disable(const size_t count, const GLenum to_disable[]);
 
 // -------------------------------------------------------------------[ VAO ]--
 
@@ -100,7 +111,14 @@ void
 bindTexture(const GLenum target, const uintptr_t texture);
 
 void
-bindTextures(const GLenum first_target, const size_t count, const uintptr_t textures[]);
+bindActiveTexture(const GLuint texture_slot,
+                  const GLenum target,
+                  const uintptr_t texture);
+
+void
+bindTextures(const GLuint first_target,
+             const size_t count,
+             const uintptr_t textures[]);
 
 void
 deleteTexture(const uintptr_t texture);
@@ -118,6 +136,19 @@ useProgram(const uintptr_t program);
 
 void
 deleteProgram(const uintptr_t program);
+
+void
+bindFragDataLocation(const uintptr_t program,
+                     const GLuint color_number,
+                     const char *name);
+
+// --------------------------------------------------------------[ Uniforms ]--
+
+intptr_t
+getUniformLocation(const uintptr_t shader, const char *name);
+
+void
+uniform1i(const intptr_t location, const GLint v0);
 
 // ---------------------------------------------------------------[ Buffers ]--
 
@@ -137,7 +168,10 @@ void
 bindBuffer(const GLenum target, const uintptr_t buffer);
 
 void
-bufferData(const GLenum target, const GLsizeiptr size, const GLvoid *data , const GLenum useage);
+bufferData(const GLenum target,
+           const GLsizeiptr size,
+           const GLvoid *data,
+           const GLenum useage);
 
 void
 deleteBuffer(const uintptr_t buffer);
@@ -146,6 +180,39 @@ void
 deleteBuffers(const size_t count, const uintptr_t buffers[]);
 
 // --------------------------------------------------------[ Vertex Attribs ]--
+
+intptr_t
+getAttribLocation(const intptr_t shader, const char *name);
+
+void
+enableVertexAttribArray(const intptr_t attrib);
+
+void
+vertexAttribPointer(const intptr_t attr_index,
+                    const GLint size,
+                    const GLenum type,
+                    const GLboolean norm,
+                    const GLsizei stride,
+                    const GLvoid *pointer);
+
+void
+enableVertexAttribArrayPointer(const intptr_t attr_index,
+                               const GLint size,
+                               const GLenum type,
+                               const GLboolean norm,
+                               const GLsizei stride,
+                               const GLvoid *pointer);
+
+// ---------------------------------------------------------------[ Drawing ]--
+
+void
+drawArrays(const GLenum mode, const GLint first, const GLsizei count);
+
+void
+drawElements(const GLenum mode,
+             const GLsizei count,
+             const GLenum type,
+             const GLvoid *index);
 
 // -----------------------------------------------[ Debug Markers Extension ]--
 
@@ -194,6 +261,47 @@ Device::getError(const char *msg)
     curr_error_callback(msg);
   }
 }
+
+// ------------------------------------------------------------------[ Misc ]--
+
+void
+Device::enable(const GLenum cap)
+{
+  glEnable(cap);
+
+  #ifdef THIN_EXTRA_ERROR_CHECKS
+  getError("Enable");
+  #endif
+}
+
+void
+Device::enable(const size_t count, const GLenum to_enable[])
+{
+  for(size_t i = 0; i < count; ++i)
+  {
+    enable(to_enable[i]);
+  }
+}
+
+void
+Device::disable(const GLenum cap)
+{
+  glDisable(cap);
+
+  #ifdef THIN_EXTRA_ERROR_CHECKS
+  getError("Enable");
+  #endif
+}
+
+void
+Device::disable(const size_t count, const GLenum to_disable[])
+{
+  for(size_t i = 0; i < count; ++i)
+  {
+    disable(to_disable[i]);
+  }
+}
+
 
 // -------------------------------------------------------------------[ VAO ]--
 
@@ -338,6 +446,117 @@ Device::getClearColor(float out_color[4])
 }
 
 
+// ---------------------------------------------------------------[ Texture ]--
+
+uintptr_t
+Device::genTexture()
+{
+  uintptr_t tex;
+  genTextures(1, &tex);
+
+  return tex;
+}
+
+void
+Device::genTextures(const size_t count, uintptr_t out_textures[])
+{
+  GLuint *textures = (GLuint*)malloc(sizeof(GLuint) * count);
+  glGenTextures(count, textures);
+
+  #ifdef THIN_EXTRA_ERROR_CHECKS
+  getError("Gen Textures");
+  #endif
+
+  for(size_t i = 0; i < count; ++i)
+  {
+    out_textures[i] = (uintptr_t)textures[i];
+  }
+
+  free(textures);
+}
+
+uintptr_t
+Device::createTexture()
+{
+  return genTexture();
+}
+
+void
+Device::createTextures(const size_t count, uintptr_t textures[])
+{
+  return genTextures(count, textures);
+}
+
+void
+Device::bindTexture(const GLenum target, const uintptr_t texture)
+{
+  glBindTexture(target, (GLuint)texture);
+
+  #ifdef THIN_EXTRA_ERROR_CHECKS
+  getError("Bind Texture");
+  #endif
+}
+
+void
+Device::bindActiveTexture(const GLuint texture_slot,
+                          const GLenum target,
+                          const uintptr_t texture)
+{
+  glActiveTexture(texture_slot);
+  glBindTexture(target, (GLuint)texture);
+
+  #ifdef THIN_EXTRA_ERROR_CHECKS
+  getError("Bind Active Texture");
+  #endif
+}
+
+void
+Device::bindTextures(const GLuint first_target,
+                     const size_t count,
+                     const uintptr_t in_textures[])
+{
+  // GLuint *textures = (GLuint*)malloc(sizeof(GLuint) * count);
+  //
+  // for(size_t i = 0; i < count; ++i)
+  // {
+  //   textures[i] = (GLuint)in_textures[i];
+  // }
+  //
+  // glBindTextures(first_target, count, textures);
+  //
+  // free(textures);
+  //
+  // #ifdef THIN_EXTRA_ERROR_CHECKS
+  // getError("Bind Textures");
+  // #endif
+}
+
+void
+Device::deleteTexture(const uintptr_t texture)
+{
+  deleteTextures(1, &texture);
+}
+
+void
+Device::deleteTextures(const size_t count, const uintptr_t in_textures[])
+{
+  GLuint *textures = (GLuint*)malloc(sizeof(GLuint) * count);
+
+  for(size_t i = 0; i < count; ++i)
+  {
+    textures[i] = (GLuint)in_textures[i];
+  }
+
+  glDeleteTextures(count, textures);
+
+  free(textures);
+
+  #ifdef THIN_EXTRA_ERROR_CHECKS
+  getError("Delete Texture");
+  #endif
+}
+
+
 // ---------------------------------------------------------------[ Shaders ]--
 
 uintptr_t
@@ -415,6 +634,43 @@ Device::deleteProgram(const uintptr_t program)
   #endif
 }
 
+
+void
+Device::bindFragDataLocation(const uintptr_t program,
+                             const GLuint color_number,
+                             const char *name)
+{
+  glBindFragDataLocation((GLuint)program, color_number, name);
+
+  #ifdef THIN_EXTRA_ERROR_CHECKS
+  getError("Deleting Program");
+  #endif
+}
+
+// --------------------------------------------------------------[ Uniforms ]--
+
+intptr_t
+Device::getUniformLocation(const uintptr_t shader, const char *name)
+{
+  const GLint loc = glGetUniformLocation((GLuint)shader, name);
+
+  #ifdef THIN_EXTRA_ERROR_CHECKS
+  getError("Getting location");
+  #endif
+
+  return (intptr_t)loc;
+}
+
+void
+Device::uniform1i(const intptr_t location, const GLint v0)
+{
+  glUniform1i((GLint)location, v0);
+
+  #ifdef THIN_EXTRA_ERROR_CHECKS
+  getError("Setting location");
+  #endif
+}
+
 // ---------------------------------------------------------------[ Buffers ]--
 
 uintptr_t
@@ -471,7 +727,10 @@ Device::bindBuffer(const GLenum target, const uintptr_t buffer)
 }
 
 void
-Device::bufferData(const GLenum target, const GLsizeiptr size, const GLvoid *data , const GLenum use)
+Device::bufferData(const GLenum target,
+                   const GLsizeiptr size,
+                   const GLvoid *data,
+                   const GLenum use)
 {
   glBufferData(target, size, data, use);
 
@@ -506,6 +765,82 @@ Device::deleteBuffers(const size_t count, const uintptr_t del_buffers[])
   free(buffers);
 }
 
+// --------------------------------------------------------[ Vertex Attribs ]--
+
+intptr_t
+Device::getAttribLocation(const intptr_t shader, const char *name)
+{
+  intptr_t index = (intptr_t)glGetAttribLocation((GLuint)shader, name);
+
+  #ifdef THIN_EXTRA_ERROR_CHECKS
+  getError("Get Attrib Location");
+  #endif
+
+  return index;
+}
+
+void
+Device::enableVertexAttribArray(const intptr_t index)
+{
+  glEnableVertexAttribArray((GLint)index);
+
+  #ifdef THIN_EXTRA_ERROR_CHECKS
+  getError("Enable Vertex Attrib Array");
+  #endif
+}
+
+void
+Device::vertexAttribPointer(const intptr_t attr_index,
+                            const GLint size,
+                            const GLenum type,
+                            const GLboolean norm,
+                            const GLsizei stride,
+                            const GLvoid *pointer)
+{
+  glVertexAttribPointer((GLint)attr_index, size, type, norm, stride, pointer);
+
+  #ifdef THIN_EXTRA_ERROR_CHECKS
+  getError("Attrib Pointer");
+  #endif
+}
+
+void
+Device::enableVertexAttribArrayPointer(const intptr_t attr_index,
+                                       const GLint size,
+                                       const GLenum type,
+                                       const GLboolean norm,
+                                       const GLsizei stride,
+                                       const GLvoid *pointer)
+{
+  enableVertexAttribArray(attr_index);
+  vertexAttribPointer(attr_index, size, type, norm, stride, pointer);
+}
+
+
+// ---------------------------------------------------------------[ Drawing ]--
+
+void
+Device::drawArrays(const GLenum mode, const GLint first, const GLsizei count)
+{
+  glDrawArrays(mode, first, count);
+
+  #ifdef THIN_EXTRA_ERROR_CHECKS
+  getError("Draw Arrays");
+  #endif
+}
+
+void
+Device::drawElements(const GLenum mode,
+                     const GLsizei count,
+                     const GLenum type,
+                     const GLvoid *index)
+{
+  glDrawElements(mode, count, type, index);
+
+  #ifdef THIN_EXTRA_ERROR_CHECKS
+  getError("Draw Elements");
+  #endif
+}
 
 
 #endif // impl guard
