@@ -4,12 +4,13 @@
 
 #define THIN_EXTRA_PARAM_CHECKS
 #define THIN_EXTRA_ERROR_CHECKS
+#define THIN_EXTRA_PEDANTIC_ERROR_CHECKS
 
 
 #include <stdint.h>
 #include <stddef.h>
 
-#include <OpenGL/gl3.h>
+#include <glad/glad.h>
 
 
 struct Device
@@ -214,7 +215,7 @@ drawElements(const GLenum mode,
              const GLenum type,
              const GLvoid *index);
 
-// -----------------------------------------------[ Debug Markers Extension ]--
+// ---------------------------------------------------------[ Debug Markers ]--
 
 bool
 getHasDebugMarkers();
@@ -241,7 +242,8 @@ popGroupMarker();
 void
 Device::initialize()
 {
-
+  gladLoadGL();
+  printf("OpenGL Version %d.%d loaded\n", GLVersion.major, GLVersion.minor);
 }
 
 void
@@ -270,7 +272,7 @@ Device::enable(const GLenum cap)
   glEnable(cap);
 
   #ifdef THIN_EXTRA_ERROR_CHECKS
-  getError("Enable");
+  getError("glEnable");
   #endif
 }
 
@@ -289,7 +291,7 @@ Device::disable(const GLenum cap)
   glDisable(cap);
 
   #ifdef THIN_EXTRA_ERROR_CHECKS
-  getError("Enable");
+  getError("glDisable");
   #endif
 }
 
@@ -328,7 +330,7 @@ Device::genVertexArrays(const size_t count, uintptr_t out_vaos[])
   }
 
   #ifdef THIN_EXTRA_ERROR_CHECKS
-  getError("Generating VAO");
+  getError("glGenVertexArrays");
   #endif
 
   free(vaos);
@@ -354,7 +356,7 @@ Device::bindVertexArray(const uintptr_t vao)
   glBindVertexArray(vao);
 
   #ifdef THIN_EXTRA_ERROR_CHECKS
-  getError("Binding VAO");
+  getError("glBindVertexArray");
   #endif
 }
 
@@ -365,7 +367,8 @@ Device::deleteVertexArray(const uintptr_t vao)
 }
 
 void
-Device::deleteVertexArrays(const size_t count, const uintptr_t vaos_to_destroy[])
+Device::deleteVertexArrays(const size_t count,
+                           const uintptr_t vaos_to_destroy[])
 {
   GLuint *vaos = (GLuint*)malloc(count * sizeof(GLuint));
 
@@ -378,7 +381,7 @@ Device::deleteVertexArrays(const size_t count, const uintptr_t vaos_to_destroy[]
   glDeleteVertexArrays(count, vaos);
 
   #ifdef THIN_EXTRA_ERROR_CHECKS
-  getError("Destroying VAO");
+  getError("glDeleteVertexArrays");
   #endif
 
   free(vaos);
@@ -392,8 +395,8 @@ Device::clearColor(const float r, const float g, const float b, const float a)
 {
   glClearColor(r,g,b,a);
 
-  #ifdef THIN_EXTRA_ERROR_CHECKS
-  getError("Clearing Color");
+  #ifdef THIN_EXTRA_PEDANTIC_ERROR_CHECKS
+  getError("glClearColor");
   #endif
 }
 
@@ -409,6 +412,10 @@ void
 Device::clear(const GLbitfield mask)
 {
   glClear(mask);
+
+  #ifdef THIN_EXTRA_PEDANTIC_ERROR_CHECKS
+  getError("glClear");
+  #endif
 }
 
 void
@@ -464,7 +471,7 @@ Device::genTextures(const size_t count, uintptr_t out_textures[])
   glGenTextures(count, textures);
 
   #ifdef THIN_EXTRA_ERROR_CHECKS
-  getError("Gen Textures");
+  getError("glGenTextures");
   #endif
 
   for(size_t i = 0; i < count; ++i)
@@ -493,7 +500,7 @@ Device::bindTexture(const GLenum target, const uintptr_t texture)
   glBindTexture(target, (GLuint)texture);
 
   #ifdef THIN_EXTRA_ERROR_CHECKS
-  getError("Bind Texture");
+  getError("glBindTexture");
   #endif
 }
 
@@ -506,7 +513,7 @@ Device::bindActiveTexture(const GLuint texture_slot,
   glBindTexture(target, (GLuint)texture);
 
   #ifdef THIN_EXTRA_ERROR_CHECKS
-  getError("Bind Active Texture");
+  getError("glBindTexture");
   #endif
 }
 
@@ -552,7 +559,7 @@ Device::deleteTextures(const size_t count, const uintptr_t in_textures[])
   free(textures);
 
   #ifdef THIN_EXTRA_ERROR_CHECKS
-  getError("Delete Texture");
+  getError("glDeleteTextures");
   #endif
 }
 
@@ -593,7 +600,7 @@ Device::createProgram(const char *vs, const char *gs, const char *fs)
   glLinkProgram(prog);
 
   #ifdef THIN_EXTRA_ERROR_CHECKS
-  getError("Compiling Program");
+  getError("glCreateShader");
   #endif
 
   return (uintptr_t)prog;

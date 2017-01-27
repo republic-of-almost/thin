@@ -2,7 +2,7 @@
 
 task :build do |t, args|
 
-  cmd = "clang++ -framework OpenGL -lsdl2 -L /usr/local/lib -I./include/ -I /usr/local/include test.cpp -std=c++14"
+  cmd = "clang++ -framework OpenGL -lsdl2 -ldl -L /usr/local/lib -I./include/ -I./include/thin/ -I /usr/local/include test.cpp ./include/thin/glad.c -std=c++14"
   sh cmd
 
 end
